@@ -1,27 +1,25 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { url, method } = req;
   const baseUrl = 'http://89.111.155.239:8000';
-
-  const query = url?.replace('/api/proxy', '') || '';
-  const targetUrl = `${baseUrl}${query}`;
+  const queryPath = req.url?.replace('/api/proxy', '') || '';
+  const targetUrl = `${baseUrl}${queryPath}`;
 
   try {
-    // Выполнение запроса с добавленными заголовками CORS
     const apiRes = await fetch(targetUrl, {
-      method,
+      method: req.method,
       headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',  // Разрешение всех доменов
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE', // Разрешенные HTTP методы
+        ...req.headers,
+        host: '',
       },
+      body: ['POST', 'PUT', 'PATCH'].includes(req.method || '') ? req : undefined,
     });
 
-    // Обработка ответа от целевого API
-    const data = await apiRes.json();
-    res.status(apiRes.status).json(data);
+    const contentType = apiRes.headers.get('content-type') || '';
+    res.setHeader('Content-Type', contentType);
+    const body = await apiRes.text();
+    res.status(apiRes.status).send(body);
   } catch (error) {
-    res.status(500).json({ error: 'Proxy failed', details: error });
+    res.status(500).json({ error: 'Proxy failed', details: String(error) });
   }
 }

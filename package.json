@@ -1,7 +1,8 @@
 {
   "name": "vercel-proxy",
   "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@vercel/node": "^3.0.10"
+  }
 }
