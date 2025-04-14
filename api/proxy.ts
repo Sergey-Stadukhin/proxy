@@ -9,17 +9,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const apiRes = await fetch(targetUrl, {
       method: req.method,
       headers: {
-        ...req.headers,
-        host: '',
+        'Content-Type': 'application/json',
       },
-      body: ['POST', 'PUT', 'PATCH'].includes(req.method || '') ? req : undefined,
+      body: ['POST', 'PUT', 'PATCH'].includes(req.method || '') ? JSON.stringify(req.body) : undefined,
     });
 
     const contentType = apiRes.headers.get('content-type') || '';
     res.setHeader('Content-Type', contentType);
-    const body = await apiRes.text();
-    res.status(apiRes.status).send(body);
-  } catch (error) {
-    res.status(500).json({ error: 'Proxy failed', details: String(error) });
+    const buffer = await apiRes.arrayBuffer();
+    res.status(apiRes.status).send(Buffer.from(buffer));
+  } catch (error: any) {
+    res.status(500).json({ error: 'Proxy failed', details: error.message });
   }
 }
